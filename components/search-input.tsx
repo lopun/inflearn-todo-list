@@ -3,9 +3,7 @@
 import { Input } from "components/material-tailwind";
 import { useState } from "react";
 
-export default function SearchInput({}) {
-  const [search, setSearch] = useState("");
-
+export default function SearchInput({ search, setSearch }) {
   return (
     <Input
       value={search}

@@ -1,30 +1,19 @@
 "use client";
 
-import { EditOutlined, CheckOutlined } from "@mui/icons-material";
 import { useState } from "react";
 import {
   Checkbox,
-  IconButton,
+  Button,
   Input,
   ListItem,
   ListItemSuffix,
   Typography,
 } from "components/material-tailwind";
 
-type TodoProps = {
-  data: any;
-  removeTodo: (id: number) => void;
-};
-
-export default function Todo({ data, removeTodo }: TodoProps) {
-  const [isEditing, setIsEditing] = useState(!!data.title);
-  const [completed, setCompleted] = useState(data.completed);
-  const [title, setTitle] = useState(data.title);
-
-  const onSave = () => {
-    setIsEditing((prev) => !prev);
-    setTitle(title);
-  };
+export default function Todo({ todo, updateTodoMutation, deleteTodoMutation }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [completed, setCompleted] = useState(todo.completed);
+  const [title, setTitle] = useState(todo.title);
 
   return (
     <ListItem
@@ -34,7 +23,15 @@ export default function Todo({ data, removeTodo }: TodoProps) {
       <Checkbox
         className="grow"
         checked={completed}
-        onChange={(e) => setCompleted(e.target.checked)}
+        disabled={updateTodoMutation.isPending || deleteTodoMutation.isPending}
+        onChange={async (e) => {
+          setCompleted(e.target.checked);
+          updateTodoMutation.mutate({
+            id: todo.id,
+            title,
+            completed: e.target.checked,
+          });
+        }}
       />
       {isEditing ? (
         <Input
@@ -52,32 +49,55 @@ export default function Todo({ data, removeTodo }: TodoProps) {
       )}
       <ListItemSuffix className="flex items-center gap-2">
         {isEditing ? (
-          <IconButton
+          <Button
             variant="outlined"
-            onClick={onSave}
+            onClick={async () => {
+              await setIsEditing((prev) => !prev);
+              updateTodoMutation.mutate({
+                id: todo.id,
+                title,
+                completed,
+              });
+            }}
             ripple={true}
-            className="aspect-square"
+            className="py-3 px-4"
           >
-            <i className="fas fa-check" />
-          </IconButton>
+            {updateTodoMutation.isPending ? (
+              "Loading"
+            ) : (
+              <i className="fas fa-check" />
+            )}
+          </Button>
         ) : (
-          <IconButton
+          <Button
             variant="outlined"
             onClick={() => setIsEditing((prev) => !prev)}
             ripple={true}
-            className="aspect-square"
+            size="sm"
+            className="py-3 px-4"
+            loading={updateTodoMutation.isPending}
           >
-            <i className="fas fa-pen" />
-          </IconButton>
+            {updateTodoMutation.isPending ? (
+              "Loading"
+            ) : (
+              <i className="fas fa-pen" />
+            )}
+          </Button>
         )}
-        <IconButton
+        <Button
           variant="outlined"
-          onClick={() => removeTodo(data.id)}
+          onClick={() => deleteTodoMutation.mutate(todo.id)}
           ripple={true}
-          className="aspect-square"
+          size="sm"
+          className="py-3 px-4"
+          loading={deleteTodoMutation.isPending}
         >
-          <i className="fas fa-trash" />
-        </IconButton>
+          {deleteTodoMutation.isPending ? (
+            "Loading"
+          ) : (
+            <i className="fas fa-trash" />
+          )}
+        </Button>
       </ListItemSuffix>
     </ListItem>
   );
